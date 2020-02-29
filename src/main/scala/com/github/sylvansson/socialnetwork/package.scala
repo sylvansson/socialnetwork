@@ -6,7 +6,7 @@ import java.util.UUID
 import io.getquill._
 
 package object socialnetwork {
-  val ctx = new PostgresJdbcContext(NamingStrategy(SnakeCase, PluralizedTableNames), "ctx")
+  val ctx = new PostgresJdbcContext(NamingStrategy(SnakeCase, PluralizedTableNames), "jdbc")
   import ctx._
 
   case class User(id: UUID) {
@@ -53,5 +53,14 @@ package object socialnetwork {
     def findPending(userId: UUID) = find(userId, Types.Pending)
     def findAccepted(userId: UUID) = find(userId, Types.Accepted)
     def findAll(userId: UUID) = find(userId, Types.All)
+
+    def accept(requesterId: UUID, requesteeId: UUID): Long =
+      ctx.run(
+        query
+          .filter(_.requesterId == lift(requesterId))
+          .filter(_.requesteeId == lift(requesteeId))
+          .filter(_.since.isEmpty)
+          .update(_.since -> lift(Option(LocalDateTime.now)))
+      )
   }
 }

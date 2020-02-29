@@ -1,10 +1,13 @@
 name := "socialnetwork"
 
-version := "0.1"
+version := "0.2"
 
-scalaVersion := "2.13.1"
+scalaVersion := "2.12.10"
 
 libraryDependencies ++= Seq(
-  "org.postgresql" % "postgresql" % "42.2.8",
-  "io.getquill" %% "quill-jdbc" % "3.5.0"
+  "com.github.finagle" %% "finch-core" % "0.31.0",
+  "com.github.finagle" %% "finch-circe" % "0.31.0",
+  "io.circe" %% "circe-generic" % "0.13.0",
+  "io.getquill" %% "quill-jdbc" % "3.5.0",
+  "org.postgresql" % "postgresql" % "42.2.10",
 )
