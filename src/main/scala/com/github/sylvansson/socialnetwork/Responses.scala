@@ -19,7 +19,14 @@ object Responses {
     implicit def encode[T](implicit encodeT: Encoder[T]): Encoder[Success[T]] = (s: Success[T]) =>
       Json.obj(
         "ok" -> Json.fromBoolean(true),
-        s.property -> s.data.asJson
+        s.property -> s.data.asJson,
       )
+  }
+
+  implicit val encodeException: Encoder[Exception] = Encoder.instance { e: Exception =>
+    Json.obj(
+      "ok" -> Json.fromBoolean(false),
+      "error" -> Json.fromString(e.getMessage),
+    )
   }
 }
