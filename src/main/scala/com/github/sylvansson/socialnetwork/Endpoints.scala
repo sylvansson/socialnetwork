@@ -2,7 +2,6 @@ package com.github.sylvansson.socialnetwork
 
 import java.util.UUID
 
-import com.github.sylvansson.socialnetwork.Exceptions.AuthenticationError
 import com.github.sylvansson.socialnetwork.Responses._
 import com.twitter.util.Future
 import com.typesafe.config.Config
@@ -13,7 +12,12 @@ import io.finch.syntax._
 import pdi.jwt._
 
 object Endpoints {
-  def service(implicit config: Config) = friendships.toService
+  def service(implicit config: Config) =
+    friendships
+      .handle {
+        case e: Exception => BadRequest(e)
+      }
+      .toService
 
   /**
    * Validate the caller's token and extract their user id.
@@ -28,7 +32,7 @@ object Endpoints {
           .toOption
           .map(_.hcursor.get[UUID]("userId")) match {
             case Some(Right(userId)) => Ok(userId)
-            case _ => BadRequest(new AuthenticationError)
+            case _ => BadRequest(new Exception("Invalid Bearer token."))
           }
     })
   }
@@ -53,8 +57,16 @@ object Endpoints {
             .map(_ => Ok(EmptySuccess()))
       }
 
+    val requestFriendship: Endpoint[EmptySuccess] =
+      post("friendships.request" :: param[UUID]("requestee") :: authorize) {
+        (requesteeId: UUID, callerId: UUID) =>
+          Future(Friendship.request(callerId, requesteeId))
+            .map(_ => Ok(EmptySuccess()))
+      }
+
     listAcceptedFriendships :+:
     listPendingFriendships :+:
-    acceptFriendship
+    acceptFriendship :+:
+    requestFriendship
   }
 }

@@ -54,7 +54,7 @@ package object socialnetwork {
     def findAccepted(userId: UUID) = find(userId, Types.Accepted)
     def findAll(userId: UUID) = find(userId, Types.All)
 
-    def accept(requesterId: UUID, requesteeId: UUID): Long =
+    def accept(requesterId: UUID, requesteeId: UUID): Unit =
       ctx.run(
         query
           .filter(_.requesterId == lift(requesterId))
@@ -62,5 +62,24 @@ package object socialnetwork {
           .filter(_.since.isEmpty)
           .update(_.since -> lift(Option(LocalDateTime.now)))
       )
+
+    def request(requesterId: UUID, requesteeId: UUID): Unit = {
+      if (requesterId == requesteeId)
+        throw new Exception("You cannot request a friendship with yourself.")
+
+      val maybeExisting = ctx
+        .run(
+          query
+            .filter(_.requesterId == lift(requesterId))
+            .filter(_.requesteeId == lift(requesteeId))
+            .take(1)
+        )
+        .headOption
+
+      if (maybeExisting.isEmpty) {
+        val f = Friendship(requesterId, requesteeId, None)
+        ctx.run(query.insert(lift(f)))
+      }
+    }
   }
 }
