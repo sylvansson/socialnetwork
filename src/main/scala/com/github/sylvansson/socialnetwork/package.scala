@@ -82,4 +82,15 @@ package object socialnetwork {
       }
     }
   }
+
+  case class Post(id: UUID, authorId: UUID, content: String, createdAt: LocalDateTime)
+  object Post {
+    val query = quote(ctx.query[Post])
+
+    def create(authorId: UUID, content: String): Post = {
+      val p = Post(UUID.randomUUID, authorId, content, LocalDateTime.now)
+      ctx.run(query.insert(lift(p)))
+      p
+    }
+  }
 }

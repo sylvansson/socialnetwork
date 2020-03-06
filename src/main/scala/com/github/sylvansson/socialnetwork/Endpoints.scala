@@ -13,7 +13,7 @@ import pdi.jwt._
 
 object Endpoints {
   def service(implicit config: Config) =
-    friendships
+    (friendships :+: posts)
       .handle {
         case e: Exception => BadRequest(e)
       }
@@ -68,5 +68,16 @@ object Endpoints {
     listPendingFriendships :+:
     acceptFriendship :+:
     requestFriendship
+  }
+
+  private def posts(implicit config: Config) = {
+    val createPost: Endpoint[Success[Post]] =
+      post("posts.create" :: param[String]("content") :: authorize) {
+        (content: String, callerId: UUID) =>
+          Future(Post.create(callerId, content))
+            .map(p => Ok(Success("post", p)))
+      }
+
+    createPost
   }
 }
